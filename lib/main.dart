@@ -14,31 +14,47 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
+  late final AnimationController controller = AnimationController(
     duration: const Duration(seconds: 1),
     vsync: this,
   );
 
-  late final Animation<double> _curvedAnimation = CurvedAnimation(
-    parent: _controller,
+  late final Animation<double> curvedAnimation = CurvedAnimation(
+    parent: controller,
     curve: Curves.easeInOut,
   );
 
   Color color = Colors.white;
+  Color establishedColor = Colors.white;
   Offset startPoint = Offset.zero;
 
   void changeColor(TapDownDetails tapDetails) {
     setState(() {
       startPoint = tapDetails.localPosition;
-      color = Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(.8);
+      color = Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1);
     });
-    _controller.reset();
-    _controller.forward();
+    controller.reset();
+    controller.forward();
+  }
+
+  void updateBackgroundListener(AnimationStatus status) {
+    if (status.isCompleted) {
+      setState(() {
+        establishedColor = color;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    controller.addStatusListener(updateBackgroundListener);
+    super.initState();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    controller.removeStatusListener(updateBackgroundListener);
+    controller.dispose();
     super.dispose();
   }
 
@@ -48,14 +64,36 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
       home: GestureDetector(
         onTapDown: changeColor,
         child: Scaffold(
+          backgroundColor: establishedColor,
           body: CustomPaint(
             painter: BackgroundCustomPainter(
               color: color,
               startPoint: startPoint,
-              animation: _curvedAnimation,
+              animation: curvedAnimation,
             ),
-            child: const Center(
-              child: Text('Hello there'),
+            child: Center(
+              child: AnimatedBuilder(
+                animation: curvedAnimation,
+                builder: (context, _) {
+                  return Transform.rotate(
+                    angle: curvedAnimation.value * 2 * pi,
+                    child: const Text(
+                      'Hello there',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 2.0,
+                            offset: Offset(1.0, 2.0),
+                          ),
+                        ],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
