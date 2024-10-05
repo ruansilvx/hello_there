@@ -13,27 +13,80 @@ class MainApp extends StatefulWidget {
   State<MainApp> createState() => _MainAppState();
 }
 
-class _MainAppState extends State<MainApp> {
-  Color color = Colors.white;
+class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    duration: const Duration(seconds: 1),
+    vsync: this,
+  );
 
-  void changeColor() {
+  late final Animation<double> _curvedAnimation = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeInOut,
+  );
+
+  Color color = Colors.white;
+  Offset startPoint = Offset.zero;
+
+  void changeColor(TapDownDetails tapDetails) {
     setState(() {
-      color = Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1);
+      startPoint = tapDetails.localPosition;
+      color = Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(.8);
     });
+    _controller.reset();
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: GestureDetector(
-        onTap: changeColor,
+        onTapDown: changeColor,
         child: Scaffold(
-          backgroundColor: color,
-          body: const Center(
-            child: Text('Hello there'),
+          body: CustomPaint(
+            painter: BackgroundCustomPainter(
+              color: color,
+              startPoint: startPoint,
+              animation: _curvedAnimation,
+            ),
+            child: const Center(
+              child: Text('Hello there'),
+            ),
           ),
         ),
       ),
     );
+  }
+}
+
+class BackgroundCustomPainter extends CustomPainter {
+  BackgroundCustomPainter({
+    required this.color,
+    required this.animation,
+    required this.startPoint,
+  }) : super(repaint: animation);
+
+  final Color color;
+  final Offset startPoint;
+  final Animation<double> animation;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    canvas.drawCircle(
+      startPoint,
+      (size.longestSide + 50) * animation.value,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(BackgroundCustomPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }
