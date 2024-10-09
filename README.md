@@ -1,4 +1,6 @@
-# Hello there app
+[![style: solid](https://img.shields.io/badge/style-solid-orange)](https://pub.dev/packages/solid_lints)
+
+# Hello There App
 
 This Flutter application features an interactive and visually appealing color-changing animation. 
 When the user taps anywhere on the screen, a circle expands from the tap point to cover the entire 
